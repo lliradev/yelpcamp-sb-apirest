@@ -3,6 +3,9 @@ package com.llira.yelpcamp.sb.apirest.controllers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -12,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,8 +27,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.llira.yelpcamp.sb.apirest.models.entity.Cliente;
-import com.llira.yelpcamp.sb.apirest.models.services.IClienteService;
+import com.llira.yelpcamp.sb.apirest.entity.Cliente;
+import com.llira.yelpcamp.sb.apirest.service.IClienteService;
 
 @CrossOrigin(origins = { "http://localhost:4200", "http://localhost:8080" })
 @RestController
@@ -62,18 +66,18 @@ public class ClienteRestController {
 	 * @param shape   forma ascendente o descendente
 	 * @return {@link ResponseEntity}
 	 */
-	@GetMapping("/clientes/page")
+	@GetMapping("/clientes/paginated")
 	public ResponseEntity<?> index(@RequestParam(name = "page", defaultValue = "0") Integer page,
 			@RequestParam(name = "limit", defaultValue = "5") Integer limit,
 			@RequestParam(name = "orderBy", defaultValue = "id") String orderBy,
 			@RequestParam(name = "shape", defaultValue = "desc") String shape) {
-
 		Map<String, Object> params = new HashMap<>();
 		Page<Cliente> clientes;
 		try {
 			Pageable pageable = PageRequest.of(page, limit, Sort.by(orderBy).descending());
 			if (shape.equals("asc"))
 				pageable = PageRequest.of(page, limit, Sort.by(orderBy));
+			System.out.println(pageable);
 			clientes = clienteService.findAll(pageable);
 		} catch (DataAccessException e) {
 			params.put("message", "Se produjo un error al consultar en la base de datos.");
@@ -114,8 +118,16 @@ public class ClienteRestController {
 	 * @return {@link ResponseEntity}
 	 */
 	@PostMapping("/clientes")
-	public ResponseEntity<?> create(@RequestBody Cliente cliente) {
+	public ResponseEntity<?> create(@Valid @RequestBody Cliente cliente, BindingResult result) {
 		Map<String, Object> params = new HashMap<>();
+		if (result.hasErrors()) {
+			List<String> errors = result.getFieldErrors().stream()
+					.map(e -> "El campo [" + e.getField().toUpperCase() + "] " + e.getDefaultMessage())
+					.collect(Collectors.toList());
+			params.put("errors", errors);
+			params.put("message", "Los campos no cumplen con la validación.");
+			return new ResponseEntity<>(params, HttpStatus.BAD_REQUEST);
+		}
 		try {
 			clienteService.save(cliente);
 		} catch (DataAccessException e) {
@@ -134,9 +146,16 @@ public class ClienteRestController {
 	 * @return {@link ResponseEntity}
 	 */
 	@PutMapping("/clientes/{id}")
-	public ResponseEntity<?> update(@RequestBody Cliente cliente, @PathVariable Long id) {
+	public ResponseEntity<?> update(@Valid @RequestBody Cliente cliente, BindingResult result, @PathVariable Long id) {
 		Cliente c1 = clienteService.findById(id);
 		Map<String, Object> params = new HashMap<>();
+		if (result.hasErrors()) {
+			List<String> errors = result.getFieldErrors().stream()
+					.map(e -> "El campo [" + e.getField().toUpperCase() + "] " + e.getDefaultMessage())
+					.collect(Collectors.toList());
+			params.put("errors", errors);
+			return new ResponseEntity<>(params, HttpStatus.BAD_REQUEST);
+		}
 		if (c1 == null) {
 			params.put("message", "No se encontro el cliente.");
 			return new ResponseEntity<>(params, HttpStatus.NOT_FOUND);

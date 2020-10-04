@@ -1,4 +1,4 @@
-package com.llira.yelpcamp.sb.apirest.models.services;
+package com.llira.yelpcamp.sb.apirest.service;
 
 import java.util.List;
 
@@ -8,8 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.llira.yelpcamp.sb.apirest.models.dao.IClienteDao;
-import com.llira.yelpcamp.sb.apirest.models.entity.Cliente;
+import com.llira.yelpcamp.sb.apirest.dao.IClienteDao;
+import com.llira.yelpcamp.sb.apirest.entity.Cliente;
 
 @Service
 public class ClienteServiceImpl implements IClienteService {
@@ -21,6 +21,12 @@ public class ClienteServiceImpl implements IClienteService {
 	@Transactional(readOnly = true)
 	public List<Cliente> findAll() {
 		return (List<Cliente>) clienteDao.findAll();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<Cliente> findAll(Pageable pageable) {
+		return clienteDao.findAll(pageable);
 	}
 
 	@Override
@@ -40,11 +46,4 @@ public class ClienteServiceImpl implements IClienteService {
 	public void delete(Long id) {
 		clienteDao.deleteById(id);
 	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public Page<Cliente> findAll(Pageable pageable) {
-		return clienteDao.findAll(pageable);
-	}
-
 }

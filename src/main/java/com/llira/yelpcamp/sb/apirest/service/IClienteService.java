@@ -1,11 +1,11 @@
-package com.llira.yelpcamp.sb.apirest.models.services;
+package com.llira.yelpcamp.sb.apirest.service;
 
 import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import com.llira.yelpcamp.sb.apirest.models.entity.Cliente;
+import com.llira.yelpcamp.sb.apirest.entity.Cliente;
 
 public interface IClienteService {
 
