@@ -1,7 +1,8 @@
-package com.llira.yelpcamp.sb.apirest.controllers;
+package com.llira.yelpcamp.sb.apirest.web.rest;
 
 import com.llira.yelpcamp.sb.apirest.entity.Cliente;
-import com.llira.yelpcamp.sb.apirest.service.IClienteService;
+import com.llira.yelpcamp.sb.apirest.service.ClienteService;
+import com.llira.yelpcamp.sb.apirest.web.rest.vm.ClienteVM;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
@@ -15,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -23,13 +23,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// @TODO - Revisar como evitar que aparezca el warning y para los métodos en general
 @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:8080"})
 @RestController
 @RequestMapping("/api")
 public class ClienteRestController {
 
+    // @TODO - Revisar como evitar que aparezca el warning
     @Autowired
-    private IClienteService clienteService;
+    private ClienteService clienteService;
 
     /**
      * Método para obtener una lista de registros sin paginación
@@ -39,9 +41,9 @@ public class ClienteRestController {
     @GetMapping("/clientes")
     public ResponseEntity<?> index() {
         Map<String, Object> params = new HashMap<>();
-        List<Cliente> clientes;
+        List<ClienteVM> clientes;
         try {
-            clientes = clienteService.findAll();
+            clientes = clienteService.findAll().stream().map(ClienteVM::new).collect(Collectors.toList());
         } catch (DataAccessException e) {
             params.put("message", "Se produjo un error al consultar en la base de datos.");
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
