@@ -11,7 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Date;
 import java.util.List;
 
-// @TODO - Revisar como evitar que aparezca el warning
+/**
+ * ClienteServiceImpl
+ *
+ * @author llira
+ * @version 1.0
+ * @since 22/01/2021
+ * <p>
+ * Clase de implementación que contiene la lógica de negocio e interactua con el repositorio
+ */
 @Service
 class ClienteServiceImpl implements ClienteService {
 

@@ -23,6 +23,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * ClienteRestController
+ *
+ * @author llira
+ * @version 1.0
+ * @since 22/01/2021
+ * <p>
+ * Clase controlador que contiene las rutas del endpoint
+ */
 // @TODO - Revisar como evitar que aparezca el warning y para los métodos en general
 @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:8080"})
 @RestController
@@ -62,17 +71,17 @@ public class ClienteRestController {
      * @return {@link ResponseEntity}
      */
     @GetMapping("/clientes/paginated")
-    public ResponseEntity<?> index(@RequestParam(name = "page", defaultValue = "0") Integer page,
-                                   @RequestParam(name = "limit", defaultValue = "5") Integer limit,
-                                   @RequestParam(name = "orderBy", defaultValue = "id") String orderBy,
-                                   @RequestParam(name = "shape", defaultValue = "desc") String shape) {
+    public ResponseEntity<?> findAll(@RequestParam(name = "page", defaultValue = "0") Integer page,
+                                     @RequestParam(name = "limit", defaultValue = "5") Integer limit,
+                                     @RequestParam(name = "orderBy", defaultValue = "id") String orderBy,
+                                     @RequestParam(name = "shape", defaultValue = "desc") String shape) {
         Map<String, Object> params = new HashMap<>();
-        Page<Cliente> clientes;
+        Page<ClienteVM> clientes;
         try {
             Pageable pageable = PageRequest.of(page, limit, Sort.by(orderBy).descending());
             if (shape.equals("asc"))
                 pageable = PageRequest.of(page, limit, Sort.by(orderBy));
-            clientes = clienteService.findAll(pageable);
+            clientes = clienteService.findAll(pageable).map(ClienteVM::new);
         } catch (DataAccessException e) {
             params.put("message", "Se produjo un error al consultar en la base de datos.");
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
@@ -88,7 +97,7 @@ public class ClienteRestController {
      * @return {@link ResponseEntity}
      */
     @GetMapping("/clientes/{id}")
-    public ResponseEntity<?> show(@PathVariable Long id) {
+    public ResponseEntity<?> findById(@PathVariable Long id) {
         Cliente cliente;
         Map<String, Object> params = new HashMap<>();
         try {
@@ -112,7 +121,7 @@ public class ClienteRestController {
      * @return {@link ResponseEntity}
      */
     @PostMapping("/clientes")
-    public ResponseEntity<?> create(@Valid @RequestBody Cliente cliente, BindingResult result) {
+    public ResponseEntity<?> insert(@Valid @RequestBody Cliente cliente, BindingResult result) {
         Map<String, Object> params = new HashMap<>();
         if (result.hasErrors()) {
             List<String> errors = result.getFieldErrors().stream()
@@ -135,13 +144,13 @@ public class ClienteRestController {
     /**
      * Método para editar un objeto
      *
-     * @param cliente objeto a editar
-     * @param id      identificador único del registro a editar
+     * @param data objeto a editar
+     * @param id   identificador único del registro a editar
      * @return {@link ResponseEntity}
      */
     @PutMapping("/clientes/{id}")
-    public ResponseEntity<?> update(@Valid @RequestBody Cliente cliente, BindingResult result, @PathVariable Long id) {
-        Cliente c = clienteService.findById(id);
+    public ResponseEntity<?> update(@Valid @RequestBody Cliente data, BindingResult result, @PathVariable Long id) {
+        Cliente cliente = clienteService.findById(id);
         Map<String, Object> params = new HashMap<>();
         if (result.hasErrors()) {
             List<String> errors = result.getFieldErrors().stream()
@@ -150,16 +159,16 @@ public class ClienteRestController {
             params.put("errors", errors);
             return new ResponseEntity<>(params, HttpStatus.BAD_REQUEST);
         }
-        if (c == null) {
+        if (cliente == null) {
             params.put("message", "No se encontro el cliente.");
             return new ResponseEntity<>(params, HttpStatus.NOT_FOUND);
         }
         try {
-            c.setApellido(cliente.getApellido());
-            c.setNombre(cliente.getNombre());
-            c.setEmail(cliente.getEmail());
-            c.setCreatedAt(cliente.getCreatedAt());
-            clienteService.save(c);
+            cliente.setApellido(data.getApellido());
+            cliente.setNombre(data.getNombre());
+            cliente.setEmail(data.getEmail());
+            cliente.setCreatedAt(data.getCreatedAt());
+            clienteService.save(cliente);
         } catch (DataAccessException e) {
             params.put("message", "Se produjo un error al editar en la base de datos.");
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());

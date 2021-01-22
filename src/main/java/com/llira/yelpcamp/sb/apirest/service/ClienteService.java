@@ -6,6 +6,15 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
+/**
+ * ClienteService
+ *
+ * @author llira
+ * @version 1.0
+ * @since 22/01/2021
+ * <p>
+ * Interfaz que contiene la lógica de negocio e interactua con el repositorio
+ */
 public interface ClienteService {
 
     List<Cliente> findAll();

@@ -8,6 +8,15 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * ClienteVM
+ *
+ * @author llira
+ * @version 1.0
+ * @since 22/01/2021
+ * <p>
+ * Vista modelo, contiene los atributos que serán expuestos al Rest Controller
+ */
 @Setter
 @Getter
 public class ClienteVM {
@@ -18,14 +27,14 @@ public class ClienteVM {
     private String email;
     private String createdAt;
 
-    public ClienteVM(Cliente cliente) {
-        this.id = cliente.getId();
-        this.nombre = cliente.getNombre();
-        this.apellido = cliente.getApellido();
-        this.nombreCompleto = cliente.getNombre() + " " + cliente.getApellido();
+    public ClienteVM(Cliente data) {
+        this.id = data.getId();
+        this.nombre = data.getNombre();
+        this.apellido = data.getApellido();
+        this.nombreCompleto = data.getNombre() + " " + data.getApellido();
         this.nombreCompleto = this.nombreCompleto.replace("null", "");
-        this.email = cliente.getEmail();
-        this.createdAt = convertDate(cliente.getCreatedAt());
+        this.email = data.getEmail();
+        this.createdAt = convertDate(data.getCreatedAt());
     }
 
     private String convertDate(Date date) {
