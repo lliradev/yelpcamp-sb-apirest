@@ -44,7 +44,7 @@ public class Cliente implements Serializable {
     @Column(name = "created_at")
     @Temporal(TemporalType.DATE)
     private Date createdAt;
-    private String image;
+    private String imagen;
 
     private static final long serialVersionUID = 1L;
 }

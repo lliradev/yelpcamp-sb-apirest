@@ -3,6 +3,8 @@ package com.llira.yelpcamp.sb.apirest.web.rest;
 import com.llira.yelpcamp.sb.apirest.entity.Cliente;
 import com.llira.yelpcamp.sb.apirest.service.ClienteService;
 import com.llira.yelpcamp.sb.apirest.web.rest.vm.ClienteVM;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
@@ -16,11 +18,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -32,13 +35,13 @@ import java.util.stream.Collectors;
  * <p>
  * Clase controlador que contiene las rutas del endpoint
  */
-// @TODO - Revisar como evitar que aparezca el warning y para los métodos en general
 @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:8080"})
 @RestController
 @RequestMapping("/api")
+@SuppressWarnings("unused")
 public class ClienteRestController {
+    private final Logger log = LoggerFactory.getLogger(ClienteRestController.class);
 
-    // @TODO - Revisar como evitar que aparezca el warning
     @Autowired
     private ClienteService clienteService;
 
@@ -48,7 +51,11 @@ public class ClienteRestController {
      * @return {@link ResponseEntity}
      */
     @GetMapping("/clientes")
-    public ResponseEntity<?> index() {
+    public ResponseEntity<?> findAll() {
+        log.info("info +");
+        log.error("error +");
+        log.warn("warn +");
+
         Map<String, Object> params = new HashMap<>();
         List<ClienteVM> clientes;
         try {
@@ -64,23 +71,24 @@ public class ClienteRestController {
     /**
      * Método para obtener una lista paginada de los registros
      *
-     * @param page    página actual
-     * @param limit   limite de registros
-     * @param orderBy campo a ordenar
-     * @param shape   forma ascendente o descendente
+     * @param page  página actual
+     * @param limit limite de registros
+     * @param sort  campo a ordenar
+     * @param order forma ascendente o descendente
      * @return {@link ResponseEntity}
      */
     @GetMapping("/clientes/paginated")
     public ResponseEntity<?> findAll(@RequestParam(name = "page", defaultValue = "0") Integer page,
                                      @RequestParam(name = "limit", defaultValue = "5") Integer limit,
-                                     @RequestParam(name = "orderBy", defaultValue = "id") String orderBy,
-                                     @RequestParam(name = "shape", defaultValue = "desc") String shape) {
+                                     @RequestParam(name = "sort", defaultValue = "id") String sort,
+                                     @RequestParam(name = "order", defaultValue = "desc") String order) {
+        log.info("Obtenemos la lista de los registros");
         Map<String, Object> params = new HashMap<>();
         Page<ClienteVM> clientes;
         try {
-            Pageable pageable = PageRequest.of(page, limit, Sort.by(orderBy).descending());
-            if (shape.equals("asc"))
-                pageable = PageRequest.of(page, limit, Sort.by(orderBy));
+            Pageable pageable = order.equals("asc")
+                    ? PageRequest.of(page, limit, Sort.by(sort))
+                    : PageRequest.of(page, limit, Sort.by(sort).descending());
             clientes = clienteService.findAll(pageable).map(ClienteVM::new);
         } catch (DataAccessException e) {
             params.put("message", "Se produjo un error al consultar en la base de datos.");
@@ -117,22 +125,17 @@ public class ClienteRestController {
     /**
      * Método para crear un nuevo objeto
      *
-     * @param cliente objeto a insertar en la base de datos
+     * @param data objeto a insertar en la base de datos
      * @return {@link ResponseEntity}
      */
     @PostMapping("/clientes")
-    public ResponseEntity<?> insert(@Valid @RequestBody Cliente cliente, BindingResult result) {
+    public ResponseEntity<?> insert(@Valid @RequestBody Cliente data, BindingResult result) {
         Map<String, Object> params = new HashMap<>();
         if (result.hasErrors()) {
-            List<String> errors = result.getFieldErrors().stream()
-                    .map(e -> "El campo [" + e.getField().toUpperCase() + "] " + e.getDefaultMessage())
-                    .collect(Collectors.toList());
-            params.put("errors", errors);
-            params.put("message", "Los campos no cumplen con la validación.");
-            return new ResponseEntity<>(params, HttpStatus.BAD_REQUEST);
+            return validateField(result);
         }
         try {
-            clienteService.save(cliente);
+            clienteService.save(data);
         } catch (DataAccessException e) {
             params.put("message", "Se produjo un error al insertar en la base de datos.");
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
@@ -153,11 +156,7 @@ public class ClienteRestController {
         Cliente cliente = clienteService.findById(id);
         Map<String, Object> params = new HashMap<>();
         if (result.hasErrors()) {
-            List<String> errors = result.getFieldErrors().stream()
-                    .map(e -> "El campo [" + e.getField().toUpperCase() + "] " + e.getDefaultMessage())
-                    .collect(Collectors.toList());
-            params.put("errors", errors);
-            return new ResponseEntity<>(params, HttpStatus.BAD_REQUEST);
+            return validateField(result);
         }
         if (cliente == null) {
             params.put("message", "No se encontro el cliente.");
@@ -187,6 +186,7 @@ public class ClienteRestController {
     public ResponseEntity<?> delete(@PathVariable Long id) {
         Map<String, Object> params = new HashMap<>();
         try {
+            deleteImage(id);
             clienteService.delete(id);
         } catch (DataAccessException e) {
             params.put("message", "Se produjo un error al eliminar en la base de datos.");
@@ -207,12 +207,58 @@ public class ClienteRestController {
     public ResponseEntity<?> upload(@RequestParam("image") MultipartFile image, @RequestParam("id") Long id) {
         Map<String, Object> params = new HashMap<>();
         Cliente cliente = clienteService.findById(id);
-        if (!image.isEmpty()) {
-            String nombre = image.getOriginalFilename();
-            Path ruta = Paths.get("uploads").resolve(nombre).toAbsolutePath();
 
-            // Files.copy(image.getInputStream(), ruta);
+        if (!image.isEmpty()) {
+            String originalFilename = UUID.randomUUID().toString() + "_" +
+                    Objects.requireNonNull(image.getOriginalFilename()).replace(" ", "");
+            Path path = Paths.get("uploads").resolve(originalFilename).toAbsolutePath();
+            try {
+                Files.copy(image.getInputStream(), path);
+            } catch (IOException e) {
+                params.put("message", "Se produjo un error al subir la imagen.");
+                params.put("error", e.getMessage() + ": " + e.getCause().getMessage());
+                return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            deleteImage(id);
+            cliente.setImagen(originalFilename);
+            clienteService.save(cliente);
+            params.put("message", "Se ha subido correctamente la foto.");
         }
-        return new ResponseEntity<>(null, HttpStatus.CREATED);
+        return new ResponseEntity<>(params, HttpStatus.CREATED);
+    }
+
+    /**
+     * Método para validar los campos obligatorios
+     *
+     * @param result objeto que contiene el resultado de las validaciones
+     * @return {@link ResponseEntity}
+     */
+    private ResponseEntity<?> validateField(BindingResult result) {
+        log.info("Validaciones generales");
+        Map<String, Object> params = new HashMap<>();
+        List<String> errors = result.getFieldErrors().stream()
+                .map(e -> "El campo [" + e.getField().toUpperCase() + "] " + e.getDefaultMessage())
+                .collect(Collectors.toList());
+        params.put("errors", errors);
+        params.put("message", "La petición contiene errores.");
+        return new ResponseEntity<>(params, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Método para eliminar una foto del cliente
+     *
+     * @param id identificador único del registro
+     */
+    private void deleteImage(Long id) {
+        log.info("Vamos a eliminar la foto.");
+        Cliente cliente = clienteService.findById(id);
+        String imagen = cliente.getImagen();
+        if (imagen != null && imagen.length() > 0) {
+            Path path = Paths.get("uploads").resolve(imagen).toAbsolutePath();
+            File file = path.toFile();
+            if (file.exists() && file.canRead()) {
+                file.delete();
+            }
+        }
     }
 }

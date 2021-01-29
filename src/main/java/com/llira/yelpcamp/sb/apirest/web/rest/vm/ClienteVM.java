@@ -26,6 +26,7 @@ public class ClienteVM {
     private String nombreCompleto;
     private String email;
     private String createdAt;
+    private String imagen;
 
     public ClienteVM(Cliente data) {
         this.id = data.getId();
@@ -35,6 +36,7 @@ public class ClienteVM {
         this.nombreCompleto = this.nombreCompleto.replace("null", "");
         this.email = data.getEmail();
         this.createdAt = convertDate(data.getCreatedAt());
+        this.imagen = data.getImagen();
     }
 
     private String convertDate(Date date) {
