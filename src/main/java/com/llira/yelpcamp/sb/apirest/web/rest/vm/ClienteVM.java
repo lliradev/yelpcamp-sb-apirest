@@ -27,6 +27,7 @@ public class ClienteVM {
     private String email;
     private String createdAt;
     private String imagen;
+    private String publicId;
 
     public ClienteVM(Cliente data) {
         this.id = data.getId();
@@ -37,6 +38,7 @@ public class ClienteVM {
         this.email = data.getEmail();
         this.createdAt = convertDate(data.getCreatedAt());
         this.imagen = data.getImagen();
+        this.publicId = data.getPublicId();
     }
 
     private String convertDate(Date date) {

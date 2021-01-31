@@ -29,7 +29,7 @@ public class Cliente implements Serializable {
     private Long id;
 
     @NotEmpty(message = "no debe estar vacío.")
-    @Size(min = 4, max = 12, message = "debe tener entre 4 y 12 caracteres.")
+    @Size(min = 2, max = 12, message = "debe tener entre 4 y 12 caracteres.")
     @Column(nullable = false)
     private String nombre;
 
@@ -44,7 +44,9 @@ public class Cliente implements Serializable {
     @Column(name = "created_at")
     @Temporal(TemporalType.DATE)
     private Date createdAt;
+
     private String imagen;
+    private String publicId;
 
     private static final long serialVersionUID = 1L;
 }

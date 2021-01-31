@@ -2,6 +2,7 @@ package com.llira.yelpcamp.sb.apirest.web.rest;
 
 import com.llira.yelpcamp.sb.apirest.entity.Cliente;
 import com.llira.yelpcamp.sb.apirest.service.ClienteService;
+import com.llira.yelpcamp.sb.apirest.service.CloudinaryService;
 import com.llira.yelpcamp.sb.apirest.web.rest.vm.ClienteVM;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,13 +18,13 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
 import javax.validation.Valid;
-import java.io.File;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -35,22 +36,23 @@ import java.util.stream.Collectors;
  * <p>
  * Clase controlador que contiene las rutas del endpoint
  */
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:8080"})
+@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:8000"})
 @RestController
-@RequestMapping("/api")
-@SuppressWarnings("unused")
+@RequestMapping("/api/v1")
 public class ClienteRestController {
     private final Logger log = LoggerFactory.getLogger(ClienteRestController.class);
 
     @Autowired
     private ClienteService clienteService;
+    @Autowired
+    private CloudinaryService cloudinaryService;
 
     /**
      * Método para obtener una lista de registros sin paginación
      *
      * @return {@link ResponseEntity}
      */
-    @GetMapping("/clientes")
+    @GetMapping("/clientes/index")
     public ResponseEntity<?> findAll() {
         log.info("info +");
         log.error("error +");
@@ -77,12 +79,12 @@ public class ClienteRestController {
      * @param order forma ascendente o descendente
      * @return {@link ResponseEntity}
      */
-    @GetMapping("/clientes/paginated")
+    @GetMapping("/clientes")
     public ResponseEntity<?> findAll(@RequestParam(name = "page", defaultValue = "0") Integer page,
                                      @RequestParam(name = "limit", defaultValue = "5") Integer limit,
                                      @RequestParam(name = "sort", defaultValue = "id") String sort,
                                      @RequestParam(name = "order", defaultValue = "desc") String order) {
-        log.info("Obtenemos la lista de los registros");
+        log.info("Obtenemos la lista paginada desde el controlador");
         Map<String, Object> params = new HashMap<>();
         Page<ClienteVM> clientes;
         try {
@@ -119,6 +121,7 @@ public class ClienteRestController {
             params.put("message", "No se encontro el cliente.");
             return new ResponseEntity<>(params, HttpStatus.NOT_FOUND);
         }
+        // ClienteVM clienteVM = new ClienteVM(cliente);
         return new ResponseEntity<>(cliente, HttpStatus.OK);
     }
 
@@ -204,26 +207,21 @@ public class ClienteRestController {
      * @return {@link ResponseEntity}
      */
     @PostMapping("/clientes/upload")
-    public ResponseEntity<?> upload(@RequestParam("image") MultipartFile image, @RequestParam("id") Long id) {
+    public ResponseEntity<?> upload(@RequestParam("image") MultipartFile image, @RequestParam("id") Long id) throws IOException {
         Map<String, Object> params = new HashMap<>();
-        Cliente cliente = clienteService.findById(id);
-
-        if (!image.isEmpty()) {
-            String originalFilename = UUID.randomUUID().toString() + "_" +
-                    Objects.requireNonNull(image.getOriginalFilename()).replace(" ", "");
-            Path path = Paths.get("uploads").resolve(originalFilename).toAbsolutePath();
-            try {
-                Files.copy(image.getInputStream(), path);
-            } catch (IOException e) {
-                params.put("message", "Se produjo un error al subir la imagen.");
-                params.put("error", e.getMessage() + ": " + e.getCause().getMessage());
-                return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-            deleteImage(id);
-            cliente.setImagen(originalFilename);
-            clienteService.save(cliente);
-            params.put("message", "Se ha subido correctamente la foto.");
+        BufferedImage bufferedImage = ImageIO.read(image.getInputStream());
+        if (bufferedImage == null) {
+            params.put("message", "Solo se admiten imagenes con extensión .jpeg, .jpg y .png.");
+            return new ResponseEntity<>(params, HttpStatus.BAD_REQUEST);
         }
+        Map<?, ?> result = cloudinaryService.upload(image);
+        Cliente cliente = clienteService.findById(id);
+        deleteImage(id);
+        cliente.setImagen(result.get("secure_url").toString());
+        cliente.setPublicId(result.get("public_id").toString());
+        clienteService.save(cliente);
+        params.put("cliente", cliente);
+        params.put("message", "Se ha subido correctamente la foto.");
         return new ResponseEntity<>(params, HttpStatus.CREATED);
     }
 
@@ -252,13 +250,12 @@ public class ClienteRestController {
     private void deleteImage(Long id) {
         log.info("Vamos a eliminar la foto.");
         Cliente cliente = clienteService.findById(id);
-        String imagen = cliente.getImagen();
-        if (imagen != null && imagen.length() > 0) {
-            Path path = Paths.get("uploads").resolve(imagen).toAbsolutePath();
-            File file = path.toFile();
-            if (file.exists() && file.canRead()) {
-                file.delete();
+        try {
+            if (cliente.getPublicId() != null) {
+                cloudinaryService.delete(cliente.getPublicId());
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
