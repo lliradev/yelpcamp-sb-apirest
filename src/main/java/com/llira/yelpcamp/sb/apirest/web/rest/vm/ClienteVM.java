@@ -1,6 +1,6 @@
 package com.llira.yelpcamp.sb.apirest.web.rest.vm;
 
-import com.llira.yelpcamp.sb.apirest.entity.Cliente;
+import com.llira.yelpcamp.sb.apirest.domain.Cliente;
 import lombok.Getter;
 import lombok.Setter;
 

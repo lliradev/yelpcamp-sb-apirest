@@ -1,6 +1,6 @@
 package com.llira.yelpcamp.sb.apirest.repository;
 
-import com.llira.yelpcamp.sb.apirest.entity.Cliente;
+import com.llira.yelpcamp.sb.apirest.domain.Cliente;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**

@@ -1,6 +1,6 @@
 package com.llira.yelpcamp.sb.apirest.service;
 
-import com.llira.yelpcamp.sb.apirest.entity.Cliente;
+import com.llira.yelpcamp.sb.apirest.domain.Cliente;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

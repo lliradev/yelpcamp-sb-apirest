@@ -1,6 +1,6 @@
 package com.llira.yelpcamp.sb.apirest.service;
 
-import com.llira.yelpcamp.sb.apirest.entity.Cliente;
+import com.llira.yelpcamp.sb.apirest.domain.Cliente;
 import com.llira.yelpcamp.sb.apirest.repository.ClienteRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

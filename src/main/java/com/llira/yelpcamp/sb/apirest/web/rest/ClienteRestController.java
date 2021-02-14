@@ -1,6 +1,6 @@
 package com.llira.yelpcamp.sb.apirest.web.rest;
 
-import com.llira.yelpcamp.sb.apirest.entity.Cliente;
+import com.llira.yelpcamp.sb.apirest.domain.Cliente;
 import com.llira.yelpcamp.sb.apirest.service.ClienteService;
 import com.llira.yelpcamp.sb.apirest.service.CloudinaryService;
 import com.llira.yelpcamp.sb.apirest.web.rest.vm.ClienteVM;
@@ -63,7 +63,6 @@ public class ClienteRestController {
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
             return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        // return new ResponseEntity<>(clientes, HttpStatus.OK);
         return ResponseEntity.ok(clientes);
     }
 
@@ -94,7 +93,6 @@ public class ClienteRestController {
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
             return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        // return new ResponseEntity<>(clientes, HttpStatus.OK);
         return ResponseEntity.ok(clientes);
     }
 
@@ -120,8 +118,6 @@ public class ClienteRestController {
             return new ResponseEntity<>(params, HttpStatus.NOT_FOUND);
         }
         ClienteVM clienteVM = new ClienteVM(cliente);
-        // return new ResponseEntity<>(cliente, HttpStatus.OK);
-        // return ResponseEntity.ok(cliente);
         return ResponseEntity.ok().body(clienteVM);
     }
 
@@ -180,8 +176,6 @@ public class ClienteRestController {
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
             return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        // @TODO - Validar si enviar el objeto actualizado
-        // return new ResponseEntity<>(null, HttpStatus.OK);
         return ResponseEntity.ok().build();
     }
 
@@ -202,7 +196,6 @@ public class ClienteRestController {
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
             return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        // return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
         return ResponseEntity.noContent().build();
     }
 
@@ -258,7 +251,6 @@ public class ClienteRestController {
                 .collect(Collectors.toList());
         params.put("errors", errors);
         params.put("message", "La petición contiene errores.");
-        // return new ResponseEntity<>(params, HttpStatus.BAD_REQUEST);
         return ResponseEntity.badRequest().body(params);
     }
 

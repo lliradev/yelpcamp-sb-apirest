@@ -1,4 +1,4 @@
-package com.llira.yelpcamp.sb.apirest.entity;
+package com.llira.yelpcamp.sb.apirest.domain;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
