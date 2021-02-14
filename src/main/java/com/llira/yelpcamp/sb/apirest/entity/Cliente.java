@@ -1,5 +1,7 @@
 package com.llira.yelpcamp.sb.apirest.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,7 +10,7 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * Cliente
@@ -29,12 +31,16 @@ public class Cliente implements Serializable {
     private Long id;
 
     @NotEmpty(message = "no debe estar vacío.")
-    @Size(min = 2, max = 12, message = "debe tener entre 4 y 12 caracteres.")
+    @Size(min = 2, max = 50, message = "debe tener entre 2 y 50 caracteres.")
     @Column(nullable = false)
     private String nombre;
 
     @NotEmpty(message = "no debe estar vacío.")
-    private String apellido;
+    @Column(name = "apellido_paterno")
+    private String apellidoPaterno;
+
+    @Column(name = "apellido_materno")
+    private String apellidoMaterno;
 
     @NotEmpty(message = "no debe estar vacío.")
     @Email(message = "debe ser una dirección de correo electrónico con formato correcto.")
@@ -42,10 +48,13 @@ public class Cliente implements Serializable {
     private String email;
 
     @Column(name = "created_at")
-    @Temporal(TemporalType.DATE)
-    private Date createdAt;
+    @JsonDeserialize(as = LocalDate.class)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
+    private LocalDate createdAt;
 
     private String imagen;
+
+    @Column(name = "public_id")
     private String publicId;
 
     private static final long serialVersionUID = 1L;

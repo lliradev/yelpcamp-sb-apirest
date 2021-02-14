@@ -4,9 +4,8 @@ import com.llira.yelpcamp.sb.apirest.entity.Cliente;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 /**
  * ClienteVM
@@ -22,27 +21,27 @@ import java.util.Date;
 public class ClienteVM {
     private Long id;
     private String nombre;
-    private String apellido;
+    private String apellidoPaterno;
+    private String apellidoMaterno;
     private String nombreCompleto;
     private String email;
     private String createdAt;
     private String imagen;
-    private String publicId;
 
     public ClienteVM(Cliente data) {
         this.id = data.getId();
         this.nombre = data.getNombre();
-        this.apellido = data.getApellido();
-        this.nombreCompleto = data.getNombre() + " " + data.getApellido();
+        this.apellidoPaterno = data.getApellidoPaterno();
+        this.apellidoMaterno = data.getApellidoMaterno();
+        this.nombreCompleto = data.getNombre() + " " + data.getApellidoPaterno() + " " + data.getApellidoMaterno();
         this.nombreCompleto = this.nombreCompleto.replace("null", "");
         this.email = data.getEmail();
         this.createdAt = convertDate(data.getCreatedAt());
         this.imagen = data.getImagen();
-        this.publicId = data.getPublicId();
     }
 
-    private String convertDate(Date date) {
-        DateFormat formatter = new SimpleDateFormat("dd/MM/yyyy");
+    private String convertDate(LocalDate date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         return formatter.format(date);
     }
 }

@@ -54,10 +54,6 @@ public class ClienteRestController {
      */
     @GetMapping("/clientes/index")
     public ResponseEntity<?> findAll() {
-        log.info("info +");
-        log.error("error +");
-        log.warn("warn +");
-
         Map<String, Object> params = new HashMap<>();
         List<ClienteVM> clientes;
         try {
@@ -67,7 +63,8 @@ public class ClienteRestController {
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
             return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(clientes, HttpStatus.OK);
+        // return new ResponseEntity<>(clientes, HttpStatus.OK);
+        return ResponseEntity.ok(clientes);
     }
 
     /**
@@ -97,7 +94,8 @@ public class ClienteRestController {
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
             return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(clientes, HttpStatus.OK);
+        // return new ResponseEntity<>(clientes, HttpStatus.OK);
+        return ResponseEntity.ok(clientes);
     }
 
     /**
@@ -121,8 +119,10 @@ public class ClienteRestController {
             params.put("message", "No se encontro el cliente.");
             return new ResponseEntity<>(params, HttpStatus.NOT_FOUND);
         }
-        // ClienteVM clienteVM = new ClienteVM(cliente);
-        return new ResponseEntity<>(cliente, HttpStatus.OK);
+        ClienteVM clienteVM = new ClienteVM(cliente);
+        // return new ResponseEntity<>(cliente, HttpStatus.OK);
+        // return ResponseEntity.ok(cliente);
+        return ResponseEntity.ok().body(clienteVM);
     }
 
     /**
@@ -133,6 +133,8 @@ public class ClienteRestController {
      */
     @PostMapping("/clientes")
     public ResponseEntity<?> insert(@Valid @RequestBody Cliente data, BindingResult result) {
+        log.info("Entramos aquí?");
+        log.info("Result: {}", result);
         Map<String, Object> params = new HashMap<>();
         if (result.hasErrors()) {
             return validateField(result);
@@ -144,6 +146,7 @@ public class ClienteRestController {
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
             return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        // @TODO - Validar si enviar el objeto creado
         return new ResponseEntity<>(null, HttpStatus.CREATED);
     }
 
@@ -166,7 +169,8 @@ public class ClienteRestController {
             return new ResponseEntity<>(params, HttpStatus.NOT_FOUND);
         }
         try {
-            cliente.setApellido(data.getApellido());
+            cliente.setApellidoPaterno(data.getApellidoPaterno());
+            cliente.setApellidoMaterno(data.getApellidoMaterno());
             cliente.setNombre(data.getNombre());
             cliente.setEmail(data.getEmail());
             cliente.setCreatedAt(data.getCreatedAt());
@@ -176,7 +180,9 @@ public class ClienteRestController {
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
             return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(null, HttpStatus.CREATED);
+        // @TODO - Validar si enviar el objeto actualizado
+        // return new ResponseEntity<>(null, HttpStatus.OK);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -196,7 +202,8 @@ public class ClienteRestController {
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
             return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
+        // return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -207,20 +214,32 @@ public class ClienteRestController {
      * @return {@link ResponseEntity}
      */
     @PostMapping("/clientes/upload")
-    public ResponseEntity<?> upload(@RequestParam("image") MultipartFile image, @RequestParam("id") Long id) throws IOException {
+    public ResponseEntity<?> upload(@RequestParam("image") MultipartFile image, @RequestParam("id") Long id) {
         Map<String, Object> params = new HashMap<>();
-        BufferedImage bufferedImage = ImageIO.read(image.getInputStream());
-        if (bufferedImage == null) {
-            params.put("message", "Solo se admiten imagenes con extensión .jpeg, .jpg y .png.");
-            return new ResponseEntity<>(params, HttpStatus.BAD_REQUEST);
+        Cliente cliente;
+        try {
+            BufferedImage bufferedImage = ImageIO.read(image.getInputStream());
+            if (bufferedImage == null) {
+                params.put("message", "Solo se admiten imagenes con extensión .jpeg, .jpg y .png.");
+                return new ResponseEntity<>(params, HttpStatus.BAD_REQUEST);
+            }
+            Map<?, ?> result = cloudinaryService.upload(image);
+            cliente = clienteService.findById(id);
+            deleteImage(id);
+            cliente.setImagen(result.get("secure_url").toString());
+            cliente.setPublicId(result.get("public_id").toString());
+            clienteService.save(cliente);
+        } catch (IOException e) {
+            params.put("message", "Se produjo un error al subir la imagen.");
+            params.put("error", e.getMessage() + ": " + e.getMessage());
+            return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (DataAccessException e) {
+            params.put("message", "Se produjo un error al subir la imagen a la base de datos.");
+            params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
+            return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        Map<?, ?> result = cloudinaryService.upload(image);
-        Cliente cliente = clienteService.findById(id);
-        deleteImage(id);
-        cliente.setImagen(result.get("secure_url").toString());
-        cliente.setPublicId(result.get("public_id").toString());
-        clienteService.save(cliente);
-        params.put("cliente", cliente);
+        ClienteVM clienteVM = new ClienteVM(cliente);
+        params.put("cliente", clienteVM);
         params.put("message", "Se ha subido correctamente la foto.");
         return new ResponseEntity<>(params, HttpStatus.CREATED);
     }
@@ -239,7 +258,8 @@ public class ClienteRestController {
                 .collect(Collectors.toList());
         params.put("errors", errors);
         params.put("message", "La petición contiene errores.");
-        return new ResponseEntity<>(params, HttpStatus.BAD_REQUEST);
+        // return new ResponseEntity<>(params, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.badRequest().body(params);
     }
 
     /**

@@ -10,7 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -57,7 +57,7 @@ class ClienteServiceImpl implements ClienteService {
     @Transactional
     public Cliente save(Cliente cliente) {
         if (cliente.getCreatedAt() == null)
-            cliente.setCreatedAt(new Date());
+            cliente.setCreatedAt(LocalDate.now());
         return clienteRepository.save(cliente);
     }
 
