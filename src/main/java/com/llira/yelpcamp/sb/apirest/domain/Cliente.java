@@ -45,12 +45,12 @@ public class Cliente implements Serializable {
     @NotEmpty(message = "no debe estar vacío.")
     @Email(message = "debe ser una dirección de correo electrónico con formato correcto.")
     @Column(nullable = false, unique = true)
-    private String email;
+    private String correo;
 
-    @Column(name = "created_at")
+    @Column(name = "fecha_creacion")
     @JsonDeserialize(as = LocalDate.class)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
-    private LocalDate createdAt;
+    private LocalDate fechaCreacion;
 
     private String imagen;
 

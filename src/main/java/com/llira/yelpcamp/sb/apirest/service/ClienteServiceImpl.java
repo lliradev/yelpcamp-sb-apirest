@@ -4,7 +4,6 @@ import com.llira.yelpcamp.sb.apirest.domain.Cliente;
 import com.llira.yelpcamp.sb.apirest.repository.ClienteRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,10 +24,11 @@ import java.util.List;
 @Service
 class ClienteServiceImpl implements ClienteService {
     private final Logger log = LoggerFactory.getLogger(ClienteServiceImpl.class);
+    private final ClienteRepository clienteRepository;
 
-    // @TODO - Revisar como evitar que aparezca el warning
-    @Autowired
-    private ClienteRepository clienteRepository;
+    public ClienteServiceImpl(ClienteRepository clienteRepository) {
+        this.clienteRepository = clienteRepository;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -56,8 +56,8 @@ class ClienteServiceImpl implements ClienteService {
     @Override
     @Transactional
     public Cliente save(Cliente cliente) {
-        if (cliente.getCreatedAt() == null)
-            cliente.setCreatedAt(LocalDate.now());
+        if (cliente.getFechaCreacion() == null)
+            cliente.setFechaCreacion(LocalDate.now());
         return clienteRepository.save(cliente);
     }
 

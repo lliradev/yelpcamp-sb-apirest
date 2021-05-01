@@ -1,11 +1,9 @@
 package com.llira.yelpcamp.sb.apirest.web.rest.vm;
 
 import com.llira.yelpcamp.sb.apirest.domain.Cliente;
+import com.llira.yelpcamp.sb.apirest.util.Util;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 /**
  * ClienteVM
@@ -24,8 +22,8 @@ public class ClienteVM {
     private String apellidoPaterno;
     private String apellidoMaterno;
     private String nombreCompleto;
-    private String email;
-    private String createdAt;
+    private String correo;
+    private String fechaCreacion;
     private String imagen;
 
     public ClienteVM(Cliente data) {
@@ -34,14 +32,9 @@ public class ClienteVM {
         this.apellidoPaterno = data.getApellidoPaterno();
         this.apellidoMaterno = data.getApellidoMaterno();
         this.nombreCompleto = data.getNombre() + " " + data.getApellidoPaterno() + " " + data.getApellidoMaterno();
-        this.nombreCompleto = this.nombreCompleto.replace("null", "");
-        this.email = data.getEmail();
-        this.createdAt = convertDate(data.getCreatedAt());
+        this.nombreCompleto = this.nombreCompleto.replace("null", "").trim();
+        this.correo = data.getCorreo();
+        this.fechaCreacion = Util.convertDate(data.getFechaCreacion());
         this.imagen = data.getImagen();
-    }
-
-    private String convertDate(LocalDate date) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        return formatter.format(date);
     }
 }

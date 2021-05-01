@@ -50,8 +50,9 @@ public class CloudinaryService {
     private File convert(MultipartFile multipartFile) {
         File file = null;
         try {
-            file = new File(UUID.randomUUID().toString() + "_" +
-                    Objects.requireNonNull(multipartFile.getOriginalFilename()).replace(" ", ""));
+            file = new File(UUID.randomUUID() + "_" + Objects
+                    .requireNonNull(multipartFile.getOriginalFilename())
+                    .replace(" ", ""));
             FileOutputStream fos = new FileOutputStream(file);
             fos.write(multipartFile.getBytes());
             fos.close();

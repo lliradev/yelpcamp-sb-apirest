@@ -3,10 +3,10 @@ package com.llira.yelpcamp.sb.apirest.web.rest;
 import com.llira.yelpcamp.sb.apirest.domain.Cliente;
 import com.llira.yelpcamp.sb.apirest.service.ClienteService;
 import com.llira.yelpcamp.sb.apirest.service.CloudinaryService;
+import com.llira.yelpcamp.sb.apirest.util.Util;
 import com.llira.yelpcamp.sb.apirest.web.rest.vm.ClienteVM;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -41,11 +41,13 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1")
 public class ClienteRestController {
     private final Logger log = LoggerFactory.getLogger(ClienteRestController.class);
+    private final ClienteService clienteService;
+    private final CloudinaryService cloudinaryService;
 
-    @Autowired
-    private ClienteService clienteService;
-    @Autowired
-    private CloudinaryService cloudinaryService;
+    private ClienteRestController(ClienteService clienteService, CloudinaryService cloudinaryService) {
+        this.clienteService = clienteService;
+        this.cloudinaryService = cloudinaryService;
+    }
 
     /**
      * Método para obtener una lista de registros sin paginación
@@ -57,7 +59,10 @@ public class ClienteRestController {
         Map<String, Object> params = new HashMap<>();
         List<ClienteVM> clientes;
         try {
-            clientes = clienteService.findAll().stream().map(ClienteVM::new).collect(Collectors.toList());
+            clientes = clienteService.findAll()
+                    .stream()
+                    .map(ClienteVM::new)
+                    .collect(Collectors.toList());
         } catch (DataAccessException e) {
             params.put("message", "Se produjo un error al consultar en la base de datos.");
             params.put("error", e.getMessage() + ": " + e.getMostSpecificCause().getMessage());
@@ -129,11 +134,9 @@ public class ClienteRestController {
      */
     @PostMapping("/clientes")
     public ResponseEntity<?> insert(@Valid @RequestBody Cliente data, BindingResult result) {
-        log.info("Entramos aquí?");
-        log.info("Result: {}", result);
         Map<String, Object> params = new HashMap<>();
         if (result.hasErrors()) {
-            return validateField(result);
+            return Util.validateField(result);
         }
         try {
             clienteService.save(data);
@@ -158,7 +161,7 @@ public class ClienteRestController {
         Cliente cliente = clienteService.findById(id);
         Map<String, Object> params = new HashMap<>();
         if (result.hasErrors()) {
-            return validateField(result);
+            return Util.validateField(result);
         }
         if (cliente == null) {
             params.put("message", "No se encontro el cliente.");
@@ -168,8 +171,8 @@ public class ClienteRestController {
             cliente.setApellidoPaterno(data.getApellidoPaterno());
             cliente.setApellidoMaterno(data.getApellidoMaterno());
             cliente.setNombre(data.getNombre());
-            cliente.setEmail(data.getEmail());
-            cliente.setCreatedAt(data.getCreatedAt());
+            cliente.setCorreo(data.getCorreo());
+            cliente.setFechaCreacion(data.getFechaCreacion());
             clienteService.save(cliente);
         } catch (DataAccessException e) {
             params.put("message", "Se produjo un error al editar en la base de datos.");
@@ -235,23 +238,6 @@ public class ClienteRestController {
         params.put("cliente", clienteVM);
         params.put("message", "Se ha subido correctamente la foto.");
         return new ResponseEntity<>(params, HttpStatus.CREATED);
-    }
-
-    /**
-     * Método para validar los campos obligatorios
-     *
-     * @param result objeto que contiene el resultado de las validaciones
-     * @return {@link ResponseEntity}
-     */
-    private ResponseEntity<?> validateField(BindingResult result) {
-        log.info("Validaciones generales");
-        Map<String, Object> params = new HashMap<>();
-        List<String> errors = result.getFieldErrors().stream()
-                .map(e -> "El campo [" + e.getField().toUpperCase() + "] " + e.getDefaultMessage())
-                .collect(Collectors.toList());
-        params.put("errors", errors);
-        params.put("message", "La petición contiene errores.");
-        return ResponseEntity.badRequest().body(params);
     }
 
     /**
