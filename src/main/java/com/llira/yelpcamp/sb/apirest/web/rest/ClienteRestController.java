@@ -22,6 +22,10 @@ import javax.imageio.ImageIO;
 import javax.validation.Valid;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -171,8 +175,8 @@ public class ClienteRestController {
             cliente.setApellidoPaterno(data.getApellidoPaterno());
             cliente.setApellidoMaterno(data.getApellidoMaterno());
             cliente.setNombre(data.getNombre());
-            cliente.setCorreo(data.getCorreo());
-            cliente.setFechaCreacion(data.getFechaCreacion());
+            cliente.setEmail(data.getEmail());
+            cliente.setCreatedAt(data.getCreatedAt());
             clienteService.save(cliente);
         } catch (DataAccessException e) {
             params.put("message", "Se produjo un error al editar en la base de datos.");
@@ -237,6 +241,32 @@ public class ClienteRestController {
         ClienteVM clienteVM = new ClienteVM(cliente);
         params.put("cliente", clienteVM);
         params.put("message", "Se ha subido correctamente la foto.");
+        return new ResponseEntity<>(params, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/clientes/upload2")
+    public ResponseEntity<?> upload2(@RequestParam("imagen") MultipartFile imagen, @RequestParam("id") Long id) {
+        Map<String, Object> params = new HashMap<>();
+        Cliente cliente = clienteService.findById(id);
+        if (!imagen.isEmpty()) {
+            String img = imagen.getOriginalFilename();
+            Path path = Paths.get("uploads").resolve(img).toAbsolutePath();
+            String base64File;
+            try {
+                base64File = Base64.getEncoder().encodeToString(imagen.getBytes());
+                log.info("Imagen en base64 {}", base64File);
+                Files.copy(imagen.getInputStream(), path);
+            } catch (IOException e) {
+                params.put("message", "Se produjo un error al subir la imagen.");
+                params.put("error", e.getMessage() + ": " + e.getMessage());
+                return new ResponseEntity<>(params, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            log.info("Imagen en base64 {}", base64File);
+            cliente.setImagen(base64File);
+            clienteService.save(cliente);
+            params.put("cliente", cliente);
+            params.put("message", "Se ha subido correctamente la foto.");
+        }
         return new ResponseEntity<>(params, HttpStatus.CREATED);
     }
 

@@ -22,8 +22,8 @@ public class ClienteVM {
     private String apellidoPaterno;
     private String apellidoMaterno;
     private String nombreCompleto;
-    private String correo;
-    private String fechaCreacion;
+    private String email;
+    private String createdAt;
     private String imagen;
 
     public ClienteVM(Cliente data) {
@@ -33,8 +33,8 @@ public class ClienteVM {
         this.apellidoMaterno = data.getApellidoMaterno();
         this.nombreCompleto = data.getNombre() + " " + data.getApellidoPaterno() + " " + data.getApellidoMaterno();
         this.nombreCompleto = this.nombreCompleto.replace("null", "").trim();
-        this.correo = data.getCorreo();
-        this.fechaCreacion = Util.convertDate(data.getFechaCreacion());
+        this.email = data.getEmail();
+        this.createdAt = Util.convertDate(data.getCreatedAt());
         this.imagen = data.getImagen();
     }
 }

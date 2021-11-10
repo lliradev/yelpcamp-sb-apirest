@@ -56,8 +56,8 @@ class ClienteServiceImpl implements ClienteService {
     @Override
     @Transactional
     public Cliente save(Cliente cliente) {
-        if (cliente.getFechaCreacion() == null)
-            cliente.setFechaCreacion(LocalDate.now());
+        if (cliente.getCreatedAt() == null)
+            cliente.setCreatedAt(LocalDate.now());
         return clienteRepository.save(cliente);
     }
 
